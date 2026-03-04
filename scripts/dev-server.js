@@ -98,9 +98,11 @@ function stop() {
 async function compileTs(cwd) {
     return new Promise((resolve, reject) => {
         const tsconfigPath = Path.join(cwd, 'tsconfig.json');
-        const tsc = Path.join(__dirname, '..', 'node_modules', '.bin', 'tsc');
-
+        // Use node to run tsc for cross-platform compatibility
+        const tscJs = Path.join(__dirname, '..', 'node_modules', 'typescript', 'bin', 'tsc');
+        const tsc = process.execPath; // node executable
         const args = [
+            tscJs,
             '--project', tsconfigPath,
             '--outDir', Path.join(__dirname, '..', 'build', 'main'),
             '--module', 'commonjs',

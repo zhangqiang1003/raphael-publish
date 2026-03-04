@@ -1,6 +1,9 @@
 import { app, BrowserWindow, ipcMain, session, Menu } from 'electron';
 import { join } from 'path';
 
+// 禁用 GPU 硬件加速以避免某些 Windows 系统上的问题
+app.disableHardwareAcceleration();
+
 let mainWindow: BrowserWindow | null = null;
 
 function createWindow() {

@@ -18,16 +18,18 @@ function buildRenderer() {
 function buildMain() {
     const mainPath = Path.join(__dirname, '..', 'src', 'main');
     const tsconfigPath = Path.join(mainPath, 'tsconfig.json');
-    const tsc = Path.join(__dirname, '..', 'node_modules', '.bin', 'tsc');
+    // Use node to run tsc for cross-platform compatibility
+    const tscJs = Path.join(__dirname, '..', 'node_modules', 'typescript', 'bin', 'tsc');
+    const tsc = process.execPath; // node executable
+    const args = [
+        tscJs,
+        '--project', tsconfigPath,
+        '--outDir', Path.join(__dirname, '..', 'build', 'main'),
+        '--module', 'commonjs',
+        '--target', 'ES2015'
+    ];
 
     return new Promise((resolve, reject) => {
-        const args = [
-            '--project', tsconfigPath,
-            '--outDir', Path.join(__dirname, '..', 'build', 'main'),
-            '--module', 'commonjs',
-            '--target', 'ES2015'
-        ];
-
         const proc = require('child_process').spawn(tsc, args, {
             cwd: process.cwd(),
             stdio: 'pipe'
