@@ -1,0 +1,48 @@
+{
+    "appId": "com.raphael.publish",
+    "productName": "Raphael Publish",
+    "directories": {
+        "output": "dist"
+    },
+    "asar": true,
+    "asarUnpack": [
+        "**/*.node"
+    ],
+    "nsis": {
+        "oneClick": false,
+        "perMachine": false,
+        "allowToChangeInstallationDirectory": true,
+        "shortcutName": "Raphael Publish"
+    },
+    "win": {
+        "target": "nsis",
+        "icon": "favicon.svg"
+    },
+    "mac": {
+        "target": "dmg",
+        "icon": "favicon.svg"
+    },
+    "linux": {
+        "target": ["AppImage"]
+    },
+    "files": [
+        {
+            "from": "build/main",
+            "to": "main",
+            "filter": ["**/*"]
+        },
+        {
+            "from": "build/renderer",
+            "to": "renderer",
+            "filter": ["**/*"]
+        },
+        "package.json"
+    ],
+    "extraResources": [
+        {
+            "from": "favicon.svg",
+            "to": "favicon.svg"
+        }
+    ],
+    "publish": null
+}
