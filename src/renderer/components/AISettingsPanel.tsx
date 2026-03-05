@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
-import type { AIUserPreferences, AIProvider, AIFeatureConfig } from '../types/ai-config';
-import { DEFAULT_AI_PREFERENCES } from '../types/ai-config';
+import { useState } from 'react';
+import type { AIUserPreferences, AIFeatureConfig } from '../types/ai-config';
 import { ProviderSettings } from './ProviderSettings';
 import { FeatureSettings } from './FeatureSettings';
 import { UsageLimitsSettings } from './UsageLimitsSettings';
@@ -25,14 +24,12 @@ export function AISettingsPanel({ preferences, onSave, onClose }: AISettingsPane
     onClose();
   };
 
-  const updateProvider = (providerId: string, updates: Partial<AIProvider>) => {
+  const updateProvider = (providerId: string, apiKey: string) => {
     setLocalPrefs((prev: AIUserPreferences) => ({
       ...prev,
       providers: {
         ...prev.providers,
-        [providerId]: prev.providers[providerId as keyof typeof prev.providers] 
-          ? { ...(prev.providers[providerId as keyof typeof prev.providers] as AIProvider), ...updates }
-          : undefined
+        [providerId]: apiKey
       }
     }));
   };
