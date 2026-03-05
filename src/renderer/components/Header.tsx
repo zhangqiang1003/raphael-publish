@@ -1,12 +1,13 @@
-import { Moon, Sun, Github } from 'lucide-react';
+import { Moon, Sun, Github, Settings2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface HeaderProps {
     themeMode: 'light' | 'dark';
     onToggleTheme: () => void;
+    onOpenAISettings?: () => void;
 }
 
-export default function Header({ themeMode, onToggleTheme }: HeaderProps) {
+export default function Header({ themeMode, onToggleTheme, onOpenAISettings }: HeaderProps) {
     return (
         <header className="glass flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 sticky top-0 z-[100]">
             <div className="flex items-center gap-3">
@@ -21,6 +22,17 @@ export default function Header({ themeMode, onToggleTheme }: HeaderProps) {
             </div>
 
             <div className="flex items-center gap-4">
+                {onOpenAISettings && (
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={onOpenAISettings}
+                        className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white"
+                        title="AI 功能设置"
+                    >
+                        <Settings2 size={20} />
+                    </motion.button>
+                )}
                 <motion.a
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}

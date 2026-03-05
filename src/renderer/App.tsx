@@ -1,15 +1,18 @@
 import { useEffect, useState, useRef } from 'react';
-import { PenLine, Eye } from 'lucide-react';
+import { PenLine, Eye, Settings2 } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 import { md, preprocessMarkdown, applyTheme } from './lib/markdown';
 import { makeWeChatCompatible } from './lib/wechatCompat';
 import { THEMES } from './lib/themes';
 import { defaultContent } from './defaultContent';
+import { AIConfigManager } from './lib/ai/AIConfigManager';
+import type { AIUserPreferences } from './types/ai-config';
 import Header from './components/Header';
 import ThemeSelector from './components/ThemeSelector';
 import Toolbar from './components/Toolbar';
 import EditorPanel from './components/EditorPanel';
 import PreviewPanel from './components/PreviewPanel';
+import { AISettingsPanel } from './components/AISettingsPanel';
 
 export default function App() {
     const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
@@ -21,6 +24,8 @@ export default function App() {
     const [previewDevice, setPreviewDevice] = useState<'mobile' | 'tablet' | 'pc'>('pc');
     const [activePanel, setActivePanel] = useState<'editor' | 'preview'>('editor');
     const [scrollSyncEnabled, setScrollSyncEnabled] = useState(true);
+    const [showAISettings, setShowAISettings] = useState(false);
+    const [aiPreferences, setAiPreferences] = useState<AIUserPreferences>(() => AIConfigManager.load());
     const previewRef = useRef<HTMLDivElement>(null);
     const editorScrollRef = useRef<HTMLTextAreaElement>(null);
     const previewOuterScrollRef = useRef<HTMLDivElement>(null);
@@ -72,6 +77,12 @@ export default function App() {
             }
         };
     }, []);
+
+    const handleSaveAISettings = (prefs: AIUserPreferences) => {
+        setAiPreferences(prefs);
+        AIConfigManager.save(prefs);
+        console.log('✅ AI 设置已保存', prefs);
+    };
 
     const getActivePreviewScrollElement = () => {
         if (previewDevice === 'pc') return previewOuterScrollRef.current;
@@ -203,7 +214,11 @@ export default function App() {
     return (
         <div className="flex flex-col h-screen overflow-hidden antialiased bg-[#fbfbfd] dark:bg-black transition-colors duration-300">
 
-            <Header themeMode={themeMode} onToggleTheme={toggleTheme} />
+            <Header 
+                themeMode={themeMode} 
+                onToggleTheme={toggleTheme}
+                onOpenAISettings={() => setShowAISettings(true)}
+            />
 
             {/* 移动端 Tab 切换 */}
             <div className="md:hidden glass-toolbar flex items-center z-[90]">
@@ -283,6 +298,14 @@ export default function App() {
                 </div>
             </main>
 
+            {/* AI 设置面板 */}
+            {showAISettings && (
+                <AISettingsPanel
+                    preferences={aiPreferences}
+                    onSave={handleSaveAISettings}
+                    onClose={() => setShowAISettings(false)}
+                />
+            )}
         </div>
     );
 }

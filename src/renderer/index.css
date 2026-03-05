@@ -73,6 +73,42 @@
         scrollbar-width: none;
     }
 
+    /* 自定义滚动条样式 - 精致美观 */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+        margin: 8px 0;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #c1c7d0 0%, #a8afb9 100%);
+        border-radius: 4px;
+        transition: background 0.2s ease;
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #a8afb9 0%, #8f96a0 100%);
+    }
+
+    .custom-scrollbar::-webkit-scrollbar-thumb:active {
+        background: linear-gradient(180deg, #8f96a0 0%, #757b85 100%);
+    }
+
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: linear-gradient(180deg, #4a4a4f 0%, #3a3a3c 100%);
+    }
+
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(180deg, #5a5a5f 0%, #4a4a4c 100%);
+    }
+
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb:active {
+        background: linear-gradient(180deg, #6a6a6f 0%, #5a5a5c 100%);
+    }
+
     .preview-device-shell {
         @apply relative;
         box-sizing: border-box;

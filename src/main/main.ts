@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, session, Menu } from 'electron';
 import { join } from 'path';
+import { initializeAIGateway } from './api/ai-gateway';
 
 // 禁用 GPU 硬件加速以避免某些 Windows 系统上的问题
 app.disableHardwareAcceleration();
@@ -53,6 +54,9 @@ app.whenReady().then(() => {
 
   // 隐藏菜单栏
   Menu.setApplicationMenu(null);
+  
+  // 初始化 AI 网关
+  initializeAIGateway();
 
   // 设置 CSP
   session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
