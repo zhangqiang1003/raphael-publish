@@ -19,14 +19,13 @@ turndownService.addRule('image', {
     filter: 'img',
     replacement: (_content, node: any) => {
         const alt = node.alt || '图片';
-        const src = node.src || '';
-        const title = node.title || '';
-        if (src.startsWith('data:image')) {
-            const typeMatch = src.match(/data:image\/(\w+);/);
-            const type = typeMatch ? typeMatch[1] : 'image';
-            return `![${alt}](data:image/${type};base64,...)${title ? ` "${title}"` : ''}\n`;
-        }
-        return `![${alt}](${src})${title ? ` "${title}"` : ''}\n`;
+        const src = (node.getAttribute?.('src') || node.src || '').trim();
+        const title = (node.title || '').replace(/"/g, '\\"');
+
+        if (!src) return '';
+
+        // Preserve full data URLs. Truncating them produces broken pasted images.
+        return `![${alt}](${src}${title ? ` "${title}"` : ''})\n`;
     }
 });
 
@@ -99,15 +98,15 @@ function fileToDataUrl(file: File): Promise<string> {
     });
 }
 
-function insertAtSelection(
+export function insertAtSelection(
     textarea: HTMLTextAreaElement,
-    markdownInput: string,
     insertedText: string,
     setMarkdownInput: (val: string) => void
 ) {
+    const currentValue = textarea.value;
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
-    const newValue = markdownInput.substring(0, start) + insertedText + markdownInput.substring(end);
+    const newValue = currentValue.substring(0, start) + insertedText + currentValue.substring(end);
     setMarkdownInput(newValue);
 
     setTimeout(() => {
@@ -119,7 +118,6 @@ function insertAtSelection(
 
 export function handleSmartPaste(
     e: React.ClipboardEvent<HTMLTextAreaElement>,
-    markdownInput: string,
     setMarkdownInput: (val: string) => void
 ): void {
     const clipboardData = e.clipboardData;
@@ -141,7 +139,7 @@ export function handleSmartPaste(
                     .join('\n\n');
 
                 if (!markdownImages) return;
-                insertAtSelection(textarea, markdownInput, markdownImages, setMarkdownInput);
+                insertAtSelection(textarea, markdownImages, setMarkdownInput);
             })
             .catch((err) => {
                 console.error('Clipboard image conversion failed:', err);
@@ -180,12 +178,12 @@ export function handleSmartPaste(
             markdown = markdown.replace(/\n{3,}/g, '\n\n');
 
             const textarea = e.currentTarget;
-            insertAtSelection(textarea, markdownInput, markdown, setMarkdownInput);
+            insertAtSelection(textarea, markdown, setMarkdownInput);
         } catch (err) {
             console.error('HTML to Markdown conversion failed:', err);
             // Fallback to text
             const textarea = e.currentTarget;
-            insertAtSelection(textarea, markdownInput, textData, setMarkdownInput);
+            insertAtSelection(textarea, textData, setMarkdownInput);
         }
     } else if (textData && isMarkdown(textData)) {
         return;
