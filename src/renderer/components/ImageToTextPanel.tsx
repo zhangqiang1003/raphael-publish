@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { X, Upload, GripVertical, Trash2, ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ARTICLE_STYLES, type ArticleStyle } from '../lib/articleStyles';
@@ -15,12 +15,85 @@ interface UploadedImage {
   name: string;
 }
 
+// 智能 Tooltip 组件
+function StyleTooltip({ style, buttonRef }: { style: ArticleStyle; buttonRef: React.MutableRefObject<HTMLDivElement | null> }) {
+  const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties>({});
+  const [arrowStyle, setArrowStyle] = useState<React.CSSProperties>({});
+  const [showBelow, setShowBelow] = useState(false);
+
+  useEffect(() => {
+    if (!buttonRef.current) return;
+
+    const rect = buttonRef.current.getBoundingClientRect();
+    const tooltipWidth = 200;
+    const tooltipHeight = 60; // 估算高度
+    const gap = 7;
+    const margin = 16;
+
+    // 计算水平位置 - 居中对齐
+    let left = rect.left + rect.width / 2 - tooltipWidth / 2;
+
+    // 左右边界检测
+    if (left < margin) {
+      left = margin;
+    } else if (left + tooltipWidth > window.innerWidth - margin) {
+      left = window.innerWidth - tooltipWidth - margin;
+    }
+
+    // 计算箭头水平位置（相对于tooltip）
+    const arrowLeft = rect.left + rect.width / 2 - left;
+
+    // 计算垂直位置
+    const spaceAbove = rect.top;
+    let top: number;
+
+    if (spaceAbove < tooltipHeight + gap + margin) {
+      // 显示在下方
+      top = rect.bottom + gap;
+      setShowBelow(true);
+    } else {
+      // 显示在上方
+      top = rect.top - gap;
+      setShowBelow(false);
+    }
+
+    setTooltipStyle({
+      position: 'fixed',
+      left: `${left}px`,
+      top: `${top}px`,
+      width: `${tooltipWidth}px`,
+      zIndex: 9999,
+    });
+
+    setArrowStyle({
+      left: `${arrowLeft}px`,
+    });
+  }, [buttonRef]);
+
+  return (
+    <div style={tooltipStyle} className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg px-3 py-2 shadow-xl pointer-events-none">
+      {style.fullDesc}
+      {/* 小箭头 */}
+      <div
+        style={arrowStyle}
+        className={`absolute left-0 -translate-x-1/2 w-0 h-0 border-l-[6px] border-r-[6px] ${
+          showBelow
+            ? 'top-0 -translate-y-full border-l-transparent border-r-transparent border-b-[6px] border-b-gray-900 dark:border-b-gray-700'
+            : 'bottom-0 translate-y-full border-l-transparent border-r-transparent border-t-[6px] border-t-gray-900 dark:border-t-gray-700'
+        }`}
+      />
+    </div>
+  );
+}
+
 export function ImageToTextPanel({ isOpen, onClose }: ImageToTextPanelProps) {
   const [selectedStyle, setSelectedStyle] = useState<string>('technical');
+  const [hoveredStyle, setHoveredStyle] = useState<string | null>(null);
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const styleRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   // 处理文件上传
   const handleFileSelect = useCallback((files: FileList | null) => {
@@ -141,8 +214,11 @@ export function ImageToTextPanel({ isOpen, onClose }: ImageToTextPanelProps) {
                 {ARTICLE_STYLES.map(style => (
                   <div
                     key={style.id}
+                    ref={el => { styleRefs.current[style.id] = el; }}
                     onClick={() => setSelectedStyle(style.id)}
-                    className={`relative p-3 rounded-xl cursor-pointer transition-all group ${
+                    onMouseEnter={() => setHoveredStyle(style.id)}
+                    onMouseLeave={() => setHoveredStyle(null)}
+                    className={`relative p-3 rounded-xl cursor-pointer transition-all ${
                       selectedStyle === style.id
                         ? 'bg-blue-50 dark:bg-blue-900/30 ring-2 ring-blue-500 dark:ring-blue-400'
                         : 'bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700'
@@ -161,12 +237,13 @@ export function ImageToTextPanel({ isOpen, onClose }: ImageToTextPanelProps) {
                     <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
                       {style.shortDesc}
                     </p>
-                    {/* Tooltip hint */}
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-10">
-                      <div className="bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg px-3 py-2 w-[300px] min-h-[100px] shadow-lg">
-                        {style.fullDesc}
-                      </div>
-                    </div>
+                    {/* 智能 Tooltip */}
+                    {hoveredStyle === style.id && (
+                      <StyleTooltip
+                        style={style}
+                        buttonRef={{ current: styleRefs.current[style.id] }}
+                      />
+                    )}
                   </div>
                 ))}
               </div>
