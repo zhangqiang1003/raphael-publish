@@ -13,6 +13,7 @@ import Toolbar from './components/Toolbar';
 import EditorPanel from './components/EditorPanel';
 import PreviewPanel from './components/PreviewPanel';
 import { AISettingsPanel } from './components/AISettingsPanel';
+import { ImageToTextPanel } from './components/ImageToTextPanel';
 
 export default function App() {
     const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light');
@@ -25,6 +26,7 @@ export default function App() {
     const [activePanel, setActivePanel] = useState<'editor' | 'preview'>('editor');
     const [scrollSyncEnabled, setScrollSyncEnabled] = useState(true);
     const [showAISettings, setShowAISettings] = useState(false);
+    const [showImageToText, setShowImageToText] = useState(false);
     const [aiPreferences, setAiPreferences] = useState<AIUserPreferences>(() => AIConfigManager.load());
     const previewRef = useRef<HTMLDivElement>(null);
     const editorScrollRef = useRef<HTMLTextAreaElement>(null);
@@ -240,7 +242,7 @@ export default function App() {
 
             {/* 排版设置 & 工具栏 (桌面端) */}
             <div className={`glass-toolbar hidden md:grid grid-cols-1 ${gridLayoutClass()} px-0 z-[90] transition-all duration-500`}>
-                <ThemeSelector activeTheme={activeTheme} onThemeChange={setActiveTheme} />
+                <ThemeSelector activeTheme={activeTheme} onThemeChange={setActiveTheme} onOpenImageToText={() => setShowImageToText(true)} />
                 <Toolbar
                     previewDevice={previewDevice}
                     onDeviceChange={setPreviewDevice}
@@ -257,7 +259,7 @@ export default function App() {
             {/* 移动端工具栏：分两行避免按钮被主题栏挤出可视区 */}
             <div className="md:hidden glass-toolbar z-[90]">
                 <div className="overflow-x-auto no-scrollbar border-b border-[#00000010] dark:border-[#ffffff10]">
-                    <ThemeSelector activeTheme={activeTheme} onThemeChange={setActiveTheme} />
+                    <ThemeSelector activeTheme={activeTheme} onThemeChange={setActiveTheme} onOpenImageToText={() => setShowImageToText(true)} />
                 </div>
                 <Toolbar
                     previewDevice={previewDevice}
@@ -306,6 +308,12 @@ export default function App() {
                     onClose={() => setShowAISettings(false)}
                 />
             )}
+
+            {/* 图生文面板 */}
+            <ImageToTextPanel
+                isOpen={showImageToText}
+                onClose={() => setShowImageToText(false)}
+            />
         </div>
     );
 }

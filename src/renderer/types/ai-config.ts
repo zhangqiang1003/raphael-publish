@@ -61,6 +61,8 @@ export interface AIUserPreferences {
 
   providers: Record<string, string>; // providerId -> apiKey 映射
 
+  customModels: Record<string, string[]>; // providerId -> 自定义模型名称列表
+
   usageLimits: {
     dailyBudget: number;
     maxRequestsPerDay: number;
@@ -455,6 +457,8 @@ export const DEFAULT_AI_PREFERENCES: AIUserPreferences = {
   },
 
   providers: {},
+
+  customModels: {},
 
   usageLimits: {
     dailyBudget: 10,

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import type { AIUserPreferences, AIFeatureConfig } from '../types/ai-config';
 import { ProviderSettings } from './ProviderSettings';
 import { FeatureSettings } from './FeatureSettings';
-import { UsageLimitsSettings } from './UsageLimitsSettings';
 
 interface AISettingsPanelProps {
   preferences: AIUserPreferences;
@@ -11,7 +10,7 @@ interface AISettingsPanelProps {
 }
 
 export function AISettingsPanel({ preferences, onSave, onClose }: AISettingsPanelProps) {
-  const [activeTab, setActiveTab] = useState<'providers' | 'features' | 'limits'>('providers');
+  const [activeTab, setActiveTab] = useState<'providers' | 'features'>('providers');
   const [localPrefs, setLocalPrefs] = useState<AIUserPreferences>({ ...preferences });
 
   const handleSave = () => {
@@ -35,20 +34,54 @@ export function AISettingsPanel({ preferences, onSave, onClose }: AISettingsPane
   };
 
   const updateFeature = (featureId: string, updates: Partial<AIFeatureConfig>) => {
-    setLocalPrefs((prev: AIUserPreferences) => ({
-      ...prev,
-      features: {
-        ...prev.features,
-        [featureId]: { ...prev.features[featureId as keyof typeof prev.features], ...updates }
+    setLocalPrefs((prev: AIUserPreferences) => {
+      // 找到匹配的 feature 键名（featureId 可能与 features 对象的键名不同）
+      const featureKey = Object.keys(prev.features).find(
+        key => prev.features[key as keyof typeof prev.features]?.featureId === featureId
+      ) as keyof typeof prev.features | undefined;
+
+      if (!featureKey) {
+        console.warn(`Feature with featureId "${featureId}" not found`);
+        return prev;
       }
-    }));
+
+      return {
+        ...prev,
+        features: {
+          ...prev.features,
+          [featureKey]: { ...prev.features[featureKey], ...updates }
+        }
+      };
+    });
   };
 
-  const updateUsageLimits = (updates: Partial<AIUserPreferences['usageLimits']>) => {
-    setLocalPrefs((prev: AIUserPreferences) => ({
-      ...prev,
-      usageLimits: { ...prev.usageLimits, ...updates }
-    }));
+  const addCustomModel = (providerId: string, modelName: string) => {
+    setLocalPrefs((prev: AIUserPreferences) => {
+      const currentModels = prev.customModels[providerId] || [];
+      if (currentModels.includes(modelName)) {
+        return prev; // 避免重复添加
+      }
+      return {
+        ...prev,
+        customModels: {
+          ...prev.customModels,
+          [providerId]: [...currentModels, modelName]
+        }
+      };
+    });
+  };
+
+  const removeCustomModel = (providerId: string, modelName: string) => {
+    setLocalPrefs((prev: AIUserPreferences) => {
+      const currentModels = prev.customModels[providerId] || [];
+      return {
+        ...prev,
+        customModels: {
+          ...prev.customModels,
+          [providerId]: currentModels.filter(m => m !== modelName)
+        }
+      };
+    });
   };
 
   return (
@@ -98,19 +131,6 @@ export function AISettingsPanel({ preferences, onSave, onClose }: AISettingsPane
               <span>功能配置</span>
             </span>
           </button>
-          <button
-            onClick={() => setActiveTab('limits')}
-            className={`px-5 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
-              activeTab === 'limits'
-                ? 'bg-blue-500 text-white shadow-md shadow-blue-500/25'
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700'
-            }`}
-          >
-            <span className="flex items-center gap-2">
-              <span>📊</span>
-              <span>用量限制</span>
-            </span>
-          </button>
         </div>
 
         {/* Content */}
@@ -119,8 +139,11 @@ export function AISettingsPanel({ preferences, onSave, onClose }: AISettingsPane
             <ProviderSettings
               providers={localPrefs.providers}
               defaultProvider={localPrefs.defaultProvider}
+              customModels={localPrefs.customModels || {}}
               onUpdateProvider={updateProvider}
               onSetDefault={(id: string) => setLocalPrefs((prev: AIUserPreferences) => ({ ...prev, defaultProvider: id }))}
+              onAddCustomModel={addCustomModel}
+              onRemoveCustomModel={removeCustomModel}
             />
           )}
           
@@ -129,16 +152,11 @@ export function AISettingsPanel({ preferences, onSave, onClose }: AISettingsPane
               features={localPrefs.features}
               globalEnabled={localPrefs.globalEnabled}
               defaultModel={localPrefs.defaultModel}
+              providers={localPrefs.providers}
+              customModels={localPrefs.customModels || {}}
               onToggleGlobal={(enabled: boolean) => setLocalPrefs((prev: AIUserPreferences) => ({ ...prev, globalEnabled: enabled }))}
               onUpdateFeature={updateFeature}
               onSetDefaultModel={(model: string) => setLocalPrefs((prev: AIUserPreferences) => ({ ...prev, defaultModel: model }))}
-            />
-          )}
-          
-          {activeTab === 'limits' && (
-            <UsageLimitsSettings
-              limits={localPrefs.usageLimits}
-              onUpdateLimits={updateUsageLimits}
             />
           )}
         </div>

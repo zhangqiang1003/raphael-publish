@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Check, X } from 'lucide-react';
+import { ChevronDown, Check, X, ImageIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { THEMES, THEME_GROUPS, type Theme } from '../lib/themes';
 
 interface ThemeSelectorProps {
     activeTheme: string;
     onThemeChange: (themeId: string) => void;
+    onOpenImageToText?: () => void;
 }
 
 /** Extract a css property value from an inline style string */
@@ -32,7 +33,7 @@ function ThemeSwatch({ styles }: { styles: Record<string, string> }) {
     );
 }
 
-export default function ThemeSelector({ activeTheme, onThemeChange }: ThemeSelectorProps) {
+export default function ThemeSelector({ activeTheme, onThemeChange, onOpenImageToText }: ThemeSelectorProps) {
     const [isThemeOpen, setIsThemeOpen] = useState(false);
     const [showBottomFade, setShowBottomFade] = useState(true);
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -75,6 +76,17 @@ export default function ThemeSelector({ activeTheme, onThemeChange }: ThemeSelec
                     </button>
                 ))}
             </div>
+
+            {/* 图生文按钮 */}
+            {onOpenImageToText && (
+                <button
+                    onClick={onOpenImageToText}
+                    className="apple-export-btn flex items-center gap-2 !px-4 !py-1.5 !text-[13px] shrink-0"
+                >
+                    <ImageIcon className="w-4 h-4" />
+                    图生文
+                </button>
+            )}
 
             <div className="relative shrink-0">
                 <button
@@ -120,7 +132,7 @@ export default function ThemeSelector({ activeTheme, onThemeChange }: ThemeSelec
                                 <div
                                     ref={scrollRef}
                                     onScroll={handleScroll}
-                                    className="overflow-y-auto px-5 pb-5"
+                                    className="overflow-y-auto px-5 pb-5 custom-scrollbar"
                                     style={{ maxHeight: 'min(calc(70vh - 56px), 544px)' }}
                                 >
                                     {THEME_GROUPS.map((group, groupIdx) => (

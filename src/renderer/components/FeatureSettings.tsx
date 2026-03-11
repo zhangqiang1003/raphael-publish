@@ -1,10 +1,13 @@
 import React from 'react';
 import type { AIFeatureConfig } from '../types/ai-config';
+import { AI_PROVIDERS } from '../types/ai-config';
 
 interface FeatureSettingsProps {
   features: Record<string, AIFeatureConfig>;
   globalEnabled: boolean;
   defaultModel: string;
+  providers: Record<string, string>; // providerId -> apiKey
+  customModels: Record<string, string[]>; // providerId -> 自定义模型列表
   onToggleGlobal: (enabled: boolean) => void;
   onUpdateFeature: (featureId: string, updates: Partial<AIFeatureConfig>) => void;
   onSetDefaultModel: (model: string) => void;
@@ -14,11 +17,36 @@ export function FeatureSettings({
   features,
   globalEnabled,
   defaultModel,
+  providers = {},
+  customModels = {},
   onToggleGlobal,
   onUpdateFeature,
   onSetDefaultModel
 }: FeatureSettingsProps) {
   const featureList = Object.values(features);
+
+  // 获取已配置 API Key 的提供商的自定义模型
+  const getAvailableModels = () => {
+    const models: { providerId: string; providerName: string; modelName: string }[] = [];
+
+    AI_PROVIDERS.forEach(provider => {
+      // 只处理已配置 API Key 的提供商
+      if (providers && providers[provider.id]) {
+        const providerCustomModels = customModels?.[provider.id] || [];
+        providerCustomModels.forEach(modelName => {
+          models.push({
+            providerId: provider.id,
+            providerName: provider.name,
+            modelName
+          });
+        });
+      }
+    });
+
+    return models;
+  };
+
+  const availableModels = getAvailableModels();
 
   return (
     <div className="space-y-6">
@@ -29,17 +57,19 @@ export function FeatureSettings({
             <h3 className="font-semibold text-gray-900 mb-1">🌍 全局 AI 功能开关</h3>
             <p className="text-sm text-gray-600">关闭后将禁用所有 AI 辅助功能</p>
           </div>
-          <label className="flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              checked={globalEnabled}
-              onChange={(e) => onToggleGlobal(e.target.checked)}
-              className="sr-only peer"
-            />
-            <div className="w-14 h-8 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:bg-blue-600 relative transition-colors">
-              <div className="absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform peer-checked:translate-x-6 shadow-md" />
-            </div>
-          </label>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={globalEnabled}
+            onClick={() => onToggleGlobal(!globalEnabled)}
+            className={`w-14 h-8 rounded-full relative transition-colors focus:outline-none focus:ring-4 focus:ring-blue-300 ${
+              globalEnabled ? 'bg-blue-600' : 'bg-gray-300'
+            }`}
+          >
+            <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform ${
+              globalEnabled ? 'translate-x-6' : ''
+            }`} />
+          </button>
         </div>
       </div>
 
@@ -48,16 +78,23 @@ export function FeatureSettings({
         <label className="block text-sm font-medium text-gray-700 mb-3">
           🎯 默认使用模型
         </label>
-        <select
-          value={defaultModel}
-          onChange={(e) => onSetDefaultModel(e.target.value)}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
-        >
-          <option value="gpt-4-turbo">GPT-4 Turbo (推荐)</option>
-          <option value="gpt-3.5-turbo">GPT-3.5 Turbo (快速)</option>
-          <option value="claude-3-opus">Claude 3 Opus (最强)</option>
-          <option value="claude-3-sonnet">Claude 3 Sonnet (平衡)</option>
-        </select>
+        {availableModels.length > 0 ? (
+          <select
+            value={defaultModel}
+            onChange={(e) => onSetDefaultModel(e.target.value)}
+            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
+          >
+            {availableModels.map(model => (
+              <option key={`${model.providerId}-${model.modelName}`} value={model.modelName}>
+                {model.modelName} ({model.providerName})
+              </option>
+            ))}
+          </select>
+        ) : (
+          <div className="px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm text-gray-500">
+            暂无可用模型，请先在「服务提供商」中配置 API Key 并添加自定义模型
+          </div>
+        )}
       </div>
 
       {/* Feature List */}
@@ -82,20 +119,20 @@ export function FeatureSettings({
                 </div>
               </div>
               
-              <label className="flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={feature.enabled && globalEnabled}
-                  onChange={(e) => onUpdateFeature(feature.featureId, { enabled: e.target.checked })}
-                  disabled={!globalEnabled}
-                  className="sr-only peer"
-                />
-                <div className={`w-11 h-6 rounded-full peer peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 relative transition-colors ${
-                  globalEnabled ? 'peer-checked:bg-blue-600 bg-gray-200' : 'bg-gray-200 opacity-50'
-                }`}>
-                  <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5" />
-                </div>
-              </label>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={feature.enabled}
+                disabled={!globalEnabled}
+                onClick={() => onUpdateFeature(feature.featureId, { enabled: !feature.enabled })}
+                className={`w-11 h-6 rounded-full relative transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+                  !globalEnabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+                } ${feature.enabled ? 'bg-blue-600' : 'bg-gray-200'}`}
+              >
+                <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                  feature.enabled ? 'translate-x-5' : ''
+                }`} />
+              </button>
             </div>
 
             {/* Advanced Settings */}
