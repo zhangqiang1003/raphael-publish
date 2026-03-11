@@ -1,4 +1,4 @@
-# Raphael Publish - 公众号排版大师
+# Raphael Publish - 
 
 专为**微信公众号**与**内容创作者**打造的现代 Markdown 排版引擎。
 
